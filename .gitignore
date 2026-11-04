@@ -70,6 +70,10 @@ web_modules/
 .env.*
 !.env.example
 
+# Mocha / mochawesome output
+mochawesome-report/
+.mochawesome.report.json
+
 # parcel-bundler cache (https://parceljs.org/)
 .cache
 .parcel-cache

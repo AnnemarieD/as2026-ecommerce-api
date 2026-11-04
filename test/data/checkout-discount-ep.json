@@ -1,0 +1,64 @@
+[
+  {
+    "id": "EP-V1",
+    "partition": "Valid — cash",
+    "description": "paymentMethod ∈ {cash}. Spec: 10% discount on cart subtotal.",
+    "userKey": "alice",
+    "productId": "prod-1",
+    "quantity": 1,
+    "paymentMethod": "cash",
+    "omitPaymentMethod": false,
+    "expected": {
+      "httpStatus": 201,
+      "discountRate": 0.1,
+      "discountAmount": 10,
+      "subtotal": 100,
+      "total": 90
+    }
+  },
+  {
+    "id": "EP-V2",
+    "partition": "Valid — credit_card",
+    "description": "paymentMethod ∈ {credit_card}. Spec: no discount.",
+    "userKey": "bob",
+    "productId": "prod-1",
+    "quantity": 1,
+    "paymentMethod": "credit_card",
+    "omitPaymentMethod": false,
+    "expected": {
+      "httpStatus": 201,
+      "discountRate": 0,
+      "discountAmount": 0,
+      "subtotal": 100,
+      "total": 100
+    }
+  },
+  {
+    "id": "EP-I1",
+    "partition": "Invalid — unsupported payment method",
+    "description": "paymentMethod ∉ {cash, credit_card}. Spec/swagger enum: reject with 400.",
+    "userKey": "carol",
+    "productId": "prod-2",
+    "quantity": 1,
+    "paymentMethod": "paypal",
+    "omitPaymentMethod": false,
+    "expected": {
+      "httpStatus": 400,
+      "errorPresent": true
+    }
+  },
+  {
+    "id": "EP-I2",
+    "partition": "Invalid — missing paymentMethod",
+    "description": "Required paymentMethod absent. Spec: reject with 400.",
+    "userKey": "alice",
+    "productId": "prod-3",
+    "quantity": 1,
+    "paymentMethod": null,
+    "omitPaymentMethod": true,
+    "expected": {
+      "httpStatus": 400,
+      "errorPresent": true
+    }
+  }
+]
