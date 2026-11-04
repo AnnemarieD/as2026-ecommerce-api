@@ -1,0 +1,56 @@
+name: API Tests
+
+on:
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  api-tests:
+    name: Run API test automation
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Start API server
+        run: |
+          npm start &
+          echo "API_PID=$!" >> "$GITHUB_ENV"
+
+      - name: Wait for API to be ready
+        run: |
+          echo "Waiting for API on http://localhost:3000 ..."
+          for i in $(seq 1 30); do
+            if curl -sf http://localhost:3000/ > /dev/null; then
+              echo "API is up (attempt $i)"
+              exit 0
+            fi
+            echo "Attempt $i: not ready yet"
+            sleep 1
+          done
+          echo "API did not become ready in time"
+          exit 1
+
+      - name: Run API tests
+        run: npm test
+        env:
+          BASE_URL: http://localhost:3000
+
+      - name: Upload test report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: mochawesome-report
+          path: mochawesome-report/
+          if-no-files-found: ignore
