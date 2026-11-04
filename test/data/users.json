@@ -1,0 +1,20 @@
+{
+  "alice": {
+    "id": "user-1",
+    "name": "Alice Johnson",
+    "email": "alice@example.com",
+    "password": "alice123"
+  },
+  "bob": {
+    "id": "user-2",
+    "name": "Bob Smith",
+    "email": "bob@example.com",
+    "password": "bob123"
+  },
+  "carol": {
+    "id": "user-3",
+    "name": "Carol Davis",
+    "email": "carol@example.com",
+    "password": "carol123"
+  }
+}

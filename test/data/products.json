@@ -1,0 +1,17 @@
+{
+  "prod-1": {
+    "id": "prod-1",
+    "name": "Wireless Headphones",
+    "price": 100
+  },
+  "prod-2": {
+    "id": "prod-2",
+    "name": "USB-C Hub",
+    "price": 50
+  },
+  "prod-3": {
+    "id": "prod-3",
+    "name": "Mechanical Keyboard",
+    "price": 120
+  }
+}
