@@ -1,0 +1,337 @@
+openapi: 3.0.3
+info:
+  title: AS2026 E-commerce API
+  description: |
+    REST API for e-commerce checkout.
+
+    **Business rule:** Paying with `cash` applies a 10% discount.
+    Paying with `credit_card` applies no discount.
+  version: 1.0.0
+
+servers:
+  - url: http://localhost:3000
+    description: Local development server
+
+tags:
+  - name: Auth
+    description: User registration and login
+  - name: Cart
+    description: Shopping cart operations
+  - name: Checkout
+    description: Place an order
+
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: UUID
+      description: Token returned by the `/login` endpoint
+
+  schemas:
+    Error:
+      type: object
+      properties:
+        error:
+          type: string
+        message:
+          type: string
+
+    UserPublic:
+      type: object
+      properties:
+        id:
+          type: string
+          example: user-1
+        name:
+          type: string
+          example: Alice Johnson
+        email:
+          type: string
+          format: email
+          example: alice@example.com
+
+    RegisterRequest:
+      type: object
+      required: [name, email, password]
+      properties:
+        name:
+          type: string
+          example: Dana Lee
+        email:
+          type: string
+          format: email
+          example: dana@example.com
+        password:
+          type: string
+          format: password
+          example: dana123
+
+    LoginRequest:
+      type: object
+      required: [email, password]
+      properties:
+        email:
+          type: string
+          format: email
+          example: alice@example.com
+        password:
+          type: string
+          format: password
+          example: alice123
+
+    LoginResponse:
+      type: object
+      properties:
+        token:
+          type: string
+          format: uuid
+        user:
+          $ref: '#/components/schemas/UserPublic'
+
+    CartItem:
+      type: object
+      properties:
+        productId:
+          type: string
+          example: prod-1
+        name:
+          type: string
+          example: Wireless Headphones
+        unitPrice:
+          type: number
+          example: 100
+        quantity:
+          type: integer
+          example: 2
+        lineTotal:
+          type: number
+          example: 200
+
+    CartResponse:
+      type: object
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/CartItem'
+        itemCount:
+          type: integer
+          example: 2
+        subtotal:
+          type: number
+          example: 200
+        message:
+          type: string
+
+    AddToCartRequest:
+      type: object
+      required: [productId, quantity]
+      properties:
+        productId:
+          type: string
+          example: prod-1
+        quantity:
+          type: integer
+          minimum: 1
+          example: 1
+
+    CheckoutRequest:
+      type: object
+      required: [paymentMethod]
+      properties:
+        paymentMethod:
+          type: string
+          enum: [cash, credit_card]
+          example: cash
+
+    Order:
+      type: object
+      properties:
+        id:
+          type: string
+        userId:
+          type: string
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/CartItem'
+        paymentMethod:
+          type: string
+          enum: [cash, credit_card]
+        subtotal:
+          type: number
+        discountRate:
+          type: number
+          description: 0.1 for cash, 0 for credit_card
+        discountAmount:
+          type: number
+        total:
+          type: number
+        createdAt:
+          type: string
+          format: date-time
+
+    CheckoutResponse:
+      type: object
+      properties:
+        message:
+          type: string
+        order:
+          $ref: '#/components/schemas/Order'
+
+paths:
+  /register:
+    post:
+      tags: [Auth]
+      summary: Register a new user
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RegisterRequest'
+      responses:
+        '201':
+          description: User created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserPublic'
+        '400':
+          description: Missing required fields
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '409':
+          description: Email already registered
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /login:
+    post:
+      tags: [Auth]
+      summary: Login and receive a bearer token
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LoginRequest'
+      responses:
+        '200':
+          description: Login successful
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LoginResponse'
+        '400':
+          description: Missing email or password
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Invalid credentials
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /cart:
+    get:
+      tags: [Cart]
+      summary: Get the authenticated user's cart
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Current cart
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CartResponse'
+        '401':
+          description: Missing or invalid token
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+    post:
+      tags: [Cart]
+      summary: Add a product to the cart
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AddToCartRequest'
+      responses:
+        '200':
+          description: Item added
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CartResponse'
+        '400':
+          description: Invalid request body
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Missing or invalid token
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Product not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /checkout:
+    post:
+      tags: [Checkout]
+      summary: Checkout the cart
+      description: |
+        Places an order for all items in the cart.
+
+        - `cash` → 10% discount
+        - `credit_card` → no discount
+
+        The cart is cleared after a successful checkout.
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CheckoutRequest'
+      responses:
+        '201':
+          description: Order created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CheckoutResponse'
+        '400':
+          description: Empty cart or invalid payment method
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Missing or invalid token
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
